@@ -1,0 +1,147 @@
+<html>
+    <head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,minimum-scale=1">
+		<title>Login</title>
+        <link href="/style.css" rel="stylesheet"/>
+	</head>
+    <body class="align">
+        <div class="grid">
+            <form action="/register_account" method="POST" class="form login">
+                <div class="form__field">
+                    <label for="username"
+                        ><svg class="icon">
+                            <use xlink:href="#icon-user"></use></svg
+                        ><span class="hidden">Username</span></label
+                    >
+                    <input
+                        autocomplete="username"
+                        id="login__username"
+                        type="text"
+                        name="username"
+                        class="form__input"
+                        placeholder="Username"
+                        required
+                    />
+                </div>
+
+                <div class="form__field">
+                    <label for="login__password"
+                        ><svg class="icon">
+                            <use xlink:href="#icon-lock"></use></svg
+                        ><span class="hidden">Password</span></label>
+                    <input
+                        id="password"
+                        type="password"
+                        name="password"
+                        class="form__input"
+                        placeholder="Password"
+                        required
+                    />
+                </div>
+
+                <div class="form__field">
+                    <label for="login__reentery"
+                        ><svg class="icon">
+                            <use xlink:href="#icon-retry"></use></svg
+                        ><span class="hidden">Password</span></label>
+                    <input
+                        id="password_reentry"
+                        type="password"
+                        name="password_reentry"
+                        class="form__input"
+                        placeholder="Retype Password"
+                        required
+                    />
+                </div>
+
+                <div class="form__field">
+                    <input id="submitButton" type="submit" value="Register" />
+                </div>
+            </form>
+
+            <script> 
+                const main = document.getElementById('password');
+                const copy = document.getElementById('password_reentry');
+    
+                const submitButton = document.getElementById('submitButton');
+    
+                function checkEquality() {
+                    if (main.value === copy.value) {
+                        submitButton.disabled = false; 
+                        submitButton.value = 'Register'; 
+
+                    } else {
+                        submitButton.disabled = true; 
+                        submitButton.value = 'Passwords must match'; 
+                    }
+                }
+    
+                main.addEventListener('input', checkEquality);
+                copy.addEventListener('input', checkEquality);
+
+                function submitData() {
+                    event.preventDefault();
+        
+                    const formData = new FormData(event.target);
+        
+                    fetch( "/register_account", {
+                        method: "POST",
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(Object.fromEntries(formData))
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+
+                        return response.json()   
+                    }).then(data=>{
+                        if (data.used) {
+                            alert("Username already used")
+                            name.focus()
+                            name.select()
+                        }
+                    }).catch(error => {
+                        console.error('error', error)
+                    })
+                }
+
+                const name = document.getElementById('login__username')
+                const form = document.querySelector('form');
+                form.addEventListener('submit', submitData);
+            </script>
+
+            <p class="text--center">
+                Have An Account? <a href="/login">Sign in now</a>
+                <svg class="icon">
+                    <use xlink:href="#icon-arrow-right"></use>
+                </svg>
+            </p>
+        </div>
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="icons">
+            <symbol id="icon-arrow-right" viewBox="0 0 1792 1792">
+                <path
+                    d="M1600 960q0 54-37 91l-651 651q-39 37-91 37-51 0-90-37l-75-75q-38-38-38-91t38-91l293-293H245q-52 0-84.5-37.5T128 1024V896q0-53 32.5-90.5T245 768h704L656 474q-38-36-38-90t38-90l75-75q38-38 90-38 53 0 91 38l651 651q37 35 37 90z"
+                />
+            </symbol>
+            <symbol id="icon-lock" viewBox="0 0 1792 1792">
+                <path
+                    d="M640 768h512V576q0-106-75-181t-181-75-181 75-75 181v192zm832 96v576q0 40-28 68t-68 28H416q-40 0-68-28t-28-68V864q0-40 28-68t68-28h32V576q0-184 132-316t316-132 316 132 132 316v192h32q40 0 68 28t28 68z"
+                />
+            </symbol>
+            <symbol id="icon-user" viewBox="0 0 1792 1792">
+                <path
+                    d="M1600 1405q0 120-73 189.5t-194 69.5H459q-121 0-194-69.5T192 1405q0-53 3.5-103.5t14-109T236 1084t43-97.5 62-81 85.5-53.5T538 832q9 0 42 21.5t74.5 48 108 48T896 971t133.5-21.5 108-48 74.5-48 42-21.5q61 0 111.5 20t85.5 53.5 62 81 43 97.5 26.5 108.5 14 109 3.5 103.5zm-320-893q0 159-112.5 271.5T896 896 624.5 783.5 512 512t112.5-271.5T896 128t271.5 112.5T1280 512z"
+                />
+            </symbol>
+            <symbol id="icon-retry" viewBox="0 0 16 16">
+                <path
+                    d="M14.9547098,7.98576084 L15.0711,7.99552 C15.6179,8.07328 15.9981,8.57957 15.9204,9.12636 C15.6826,10.7983 14.9218,12.3522 13.747,13.5654 C12.5721,14.7785 11.0435,15.5888 9.37999,15.8801 C7.7165,16.1714 6.00349,15.9288 4.48631,15.187 C3.77335,14.8385 3.12082,14.3881 2.5472,13.8537 L1.70711,14.6938 C1.07714,15.3238 3.55271368e-15,14.8776 3.55271368e-15,13.9867 L3.55271368e-15,9.99998 L3.98673,9.99998 C4.87763,9.99998 5.3238,11.0771 4.69383,11.7071 L3.9626,12.4383 C4.38006,12.8181 4.85153,13.1394 5.36475,13.3903 C6.50264,13.9466 7.78739,14.1285 9.03501,13.9101 C10.2826,13.6916 11.4291,13.0839 12.3102,12.174 C13.1914,11.2641 13.762,10.0988 13.9403,8.84476 C14.0181,8.29798 14.5244,7.91776 15.0711,7.99552 L14.9547098,7.98576084 Z M11.5137,0.812976 C12.2279,1.16215 12.8814,1.61349 13.4558,2.14905 L14.2929,1.31193 C14.9229,0.681961 16,1.12813 16,2.01904 L16,6.00001 L12.019,6.00001 C11.1281,6.00001 10.6819,4.92287 11.3119,4.29291 L12.0404,3.56441 C11.6222,3.18346 11.1497,2.86125 10.6353,2.60973 C9.49736,2.05342 8.21261,1.87146 6.96499,2.08994 C5.71737,2.30841 4.57089,2.91611 3.68976,3.82599 C2.80862,4.73586 2.23802,5.90125 2.05969,7.15524 C1.98193,7.70202 1.47564,8.08224 0.928858,8.00448 C0.382075,7.92672 0.00185585,7.42043 0.0796146,6.87364 C0.31739,5.20166 1.07818,3.64782 2.25303,2.43465 C3.42788,1.22148 4.95652,0.411217 6.62001,0.119916 C8.2835,-0.171384 9.99651,0.0712178 11.5137,0.812976 Z"
+                />
+            </symbol>
+        </svg>
+    </body>
+</html>

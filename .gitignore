@@ -1,0 +1,7 @@
+data
+.env*
+dev.sh
+run.sh
+
+node_modules/
+

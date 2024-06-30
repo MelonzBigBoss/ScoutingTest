@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Input Form</title>
+        <link rel="stylesheet" href="style.css"> <!-- Linking external CSS file -->
+    </head>
+    <body>
+        <h2>Input Form</h2>
+        <form id="pitscout-data">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" autocomplete="off" required>
+
+            <label for="team">Team Number:</label>
+            <input type="number" id="team" name="team" required>
+
+            <label for="weight">Weight (lbs):</label>
+            <input type="number" id="weight" name="weight" required>
+
+            <label for="size">Size:</label>
+            <input type="text" id="size" name="size" required>
+
+            <input type="submit" value="Submit">
+        </form>
+    </body>
+    <script>
+        function submitData() {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+
+            fetch( "/pitscout-submit", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+            }).catch(error => {
+                console.error('error', error)
+            })
+        }
+
+        const form = document.querySelector('form');
+        form.addEventListener('submit', submitData);
+
+        function handleInputChange() {
+            fetch(`/pitscout-get?teamNumber=${inputElement.value}`).then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('JSON response:', data);
+            })
+        }
+
+        const inputElement = document.getElementById('team');
+        inputElement.addEventListener('input', handleInputChange);
+    </script>
+</html>

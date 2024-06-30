@@ -5,7 +5,7 @@ const sqlite = require("sqlite3")
 const crypto = require('crypto')
 const path = require("path")
 
-const db = new sqlite.Database("data")
+const db = new sqlite.Database("Data/data")
 
 const app = express()
 
@@ -20,6 +20,16 @@ app.use(session({
 }));
 
 app.use(express.json());
+app.use(fileUpload({
+	limits: {
+		fileSize: 100 * 1024 * 1024, //100 MB
+		files: 3,
+		safeFileNames: true,
+		preserveExtension: true, 
+		useTempFiles: true,
+		tempFileDir: "Data/images/temp"
+	}
+}))
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'static')));
 const port = process.env.port || 3000
@@ -41,7 +51,7 @@ db.exec(`
 		password VARCHAR(32) NOT NULL,
 		admin BOOLEAN NOT NULL CHECK(admin IN (0,1))); 
 		
-	INSERT OR IGNORE INTO accounts (id, username, password, admin) VALUES (1, '${process.env.adminName}','${hashPassword(process.env.adminPass)}',1);
+	INSERT OR IGNORE INTO accounts (id, username, password, admin) VALUES (1, '${process.env.adminName || "admin"}','${hashPassword(process.env.adminPass || "admin")}',1);
 		
 	CREATE TABLE IF NOT EXISTS pitscout (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -144,6 +154,35 @@ app.post("/pitscout-submit", function(req, res) {
 	console.log(req.body)
 
 	res.status(200).send("Received Successfully");
+})
+
+const allowedMIMETypes = ['image/jpeg', 'image/png', 'image/gif']
+app.post('/upload', function(req,res) {
+	var count = 0 //Search Database for the amount of teamPics we already have
+	var results = []
+
+	if (!req.files) {
+		res.status(200).end()
+		return;
+	}
+	Object.values(req.files).forEach(function(file, index, array) {
+
+		if (!allowedMIMETypes.includes(file.mimetype)) {
+			results.push("Filetype Not Allowed:" + file.name)
+			return;
+		}
+		let teamNumber=696
+		file.mv(`Data/images/${teamNumber}-${count}`, function (err) {
+			if (err) {
+				results.push(err)
+				return
+			}
+			results.push('File Uploaded Successfully')
+			count++;
+		})
+	})
+
+	res.status(200).send(results.join("\n"))
 })
 
 app.listen(port, ()=>{

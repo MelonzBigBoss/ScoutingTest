@@ -21,6 +21,9 @@
             <label for="size">Size:</label>
             <input type="text" id="size" name="size" required>
 
+            <label for="images">Images:</label>
+            <input type="file" id="images" name="images">
+
             <input type="submit" value="Submit">
         </form>
     </body>
@@ -30,7 +33,7 @@
 
             const formData = new FormData(event.target);
 
-            fetch( "/pitscout-submit", {
+            fetch("/pitscout-submit", {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
@@ -43,8 +46,19 @@
             }).catch(error => {
                 console.error('error', error)
             })
+
+            const formDataImage = new FormData();
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formDataImage.append('images', fileInput.files[i]); // Append each selected file
+            }
+
+            fetch("/upload", {
+                method: "POST",
+                body: formDataImage
+            })
         }
 
+        const fileInput = document.getElementById('images');
         const form = document.querySelector('form');
         form.addEventListener('submit', submitData);
 

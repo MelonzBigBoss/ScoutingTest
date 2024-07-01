@@ -1,190 +1,245 @@
-const express = require("express")
-const session = require("express-session")
-const fileUpload = require("express-fileupload")
-const sqlite = require("sqlite3")
-const crypto = require('crypto')
-const path = require("path")
+const express = require("express");
+const session = require("express-session");
+const fileUpload = require("express-fileupload");
+const sqlite = require("sqlite3");
+const crypto = require("crypto");
+const path = require("path");
 
-const db = new sqlite.Database("Data/data")
+const db = new sqlite.Database("Data/data");
 
-const app = express()
+const app = express();
 
-app.use(session({
-	secret: 'garbage',
-	resave: true,
-	saveUninitialized: true,
-  cookie: {
-    secure: false,
-    expires: 1000 * 60 * 60 * 3, // 3 Hour
-  }
-}));
+app.use(
+  session({
+    secret: "garbage",
+    resave: true,
+    saveUninitialized: true,
+    cookie: {
+      secure: false,
+      expires: 1000 * 60 * 60 * 3, // 3 Hour
+    },
+  }),
+);
 
 app.use(express.json());
-app.use(fileUpload({
-	limits: {
-		fileSize: 100 * 1024 * 1024, //100 MB
-		files: 3,
-		safeFileNames: true,
-		preserveExtension: true, 
-		useTempFiles: true,
-		tempFileDir: "Data/images/temp"
-	}
-}))
+app.use(
+  fileUpload({
+    limits: {
+      fileSize: 100 * 1024 * 1024, //100 MB
+      files: 3,
+      safeFileNames: true,
+      preserveExtension: true,
+      useTempFiles: true,
+      tempFileDir: "Data/images/temp",
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'static')));
-const port = process.env.port || 3000
+app.use(express.static(path.join(__dirname, "static")));
+const port = process.env.port || 3000;
 
-const callAPI = async route => { // https://www.thebluealliance.com/apidocs/v3 API DOCS
-    return await (await fetch("https://www.thebluealliance.com/api/v3" + route, {
-        method: "GET",
-        withCredentials: true,
-        headers: {
-            "X-TBA-Auth-Key": process.env.tbaKey
-        }
-    })).json();
+const callAPI = async (route) => {
+  // https://www.thebluealliance.com/apidocs/v3 API DOCS
+  return await (
+    await fetch("https://www.thebluealliance.com/api/v3" + route, {
+      method: "GET",
+      withCredentials: true,
+      headers: {
+        "X-TBA-Auth-Key": process.env.tbaKey,
+      },
+    })
+  ).json();
 };
 
 db.exec(`
 	CREATE TABLE IF NOT EXISTS accounts (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id INTEGER PRIMARY KEY,
 		username TEXT NOT NULL UNIQUE,
 		password VARCHAR(32) NOT NULL,
-		admin BOOLEAN NOT NULL CHECK(admin IN (0,1))); 
-		
+		admin BOOLEAN NOT NULL CHECK(admin IN (0,1)));
+
 	INSERT OR IGNORE INTO accounts (id, username, password, admin) VALUES (1, '${process.env.adminName || "admin"}','${hashPassword(process.env.adminPass || "admin")}',1);
-		
+
 	CREATE TABLE IF NOT EXISTS pitscout (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id INTEGER PRIMARY KEY,
 		team INTEGER NOT NULL UNIQUE,
-		weight REAL NOT NULL, 
-		size TEXT NOT NULL)	
-`)
+		weight REAL NOT NULL,
+		size TEXT NOT NULL);
 
-
+	CREATE TABLE IF NOT EXISTS teamImages (
+	  id INTEGER PRIMARY KEY,
+		team INTEGER NOT NULL,
+		fileName TEXT NOT NULL
+	)
+`);
 
 function hashPassword(cleanPassword) {
-	return crypto.createHash('md5').update(cleanPassword + "SaltyThing").digest("hex")
+  return crypto
+    .createHash("md5")
+    .update(cleanPassword + "SaltyThing")
+    .digest("hex");
 }
 
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/pages/index.html');
-})
-
-app.get('/login', (req, res) => {
-	if (req.session.loggedin) {
-		res.redirect('/home')
-	} else {
-  		res.sendFile(__dirname + '/pages/login.html')
-	}
-})
-
-app.get('/register', (req, res) => {
-	res.sendFile(__dirname + '/pages/register.html')
-})
-
-app.get('/logout', (req, res) => {
-	req.session.destroy()
-	res.redirect("/")
-})
-
-app.post('/auth', function(request, response) {
-	let username = request.body.username;
-	let password = request.body.password;
-	if (username && password) {
-	  	db.all('SELECT * FROM accounts WHERE username = ? AND password = ?', [username, hashPassword(password)], function(error, results, fields) {
-			if (error) throw error;
-			if (results.length > 0) {
-				request.session.loggedin = true;
-				request.session.username = username;
-				response.redirect('/home');
-			} else {
-				response.send('Incorrect Username and/or Password!');
-			}			
-			response.end();
-		});
-	} else {
-		response.send('Please enter Username and Password!');
-		response.end();
-	}
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/pages/index.html");
 });
 
-app.post("/register_account", function(req, res) {
-	let username = req.body.username;
-	let password = req.body.password;
-
-	db.all('SELECT * FROM accounts WHERE username = ?', [username], function(error, results, fields) {
-		if (results.length > 0) {
-			res.json({used: true}).end()
-		} else {
-			if (username && password) {
-				db.run(`INSERT INTO accounts (username, password, admin) VALUES (?, ?, 0);`, [username, hashPassword(password)], function(error, results, field) {
-					if (error) throw error;
-		
-					res.redirect('/login')
-				});	
-			}
-		}
-	});
-})
-
-app.get('/home', function(request, response) {
-	// If the user is loggedin
-	if (request.session.loggedin) {
-    	response.sendFile(__dirname + '/pages/home.html')
-	} else {
-		// Not logged in
-		response.status(401).send('Please login to view this page!');
-	}
+app.get("/login", (req, res) => {
+  if (req.session.loggedin) {
+    res.redirect("/home");
+  } else {
+    res.sendFile(__dirname + "/pages/login.html");
+  }
 });
 
-app.get("/pitscout", function(req, res) {
-	if (req.session.loggedin) {
-    	res.sendFile(__dirname + '/pages/pitscout.html')
-	} else {
-		// Not logged in
-		res.status(401).send('Please login to view this page!');
-	}
-})
+app.get("/register", (req, res) => {
+  res.sendFile(__dirname + "/pages/register.html");
+});
 
-app.get("/pitscout-get", function(req, res) { 
-	res.json({car : "hi", number: req.query.teamNumber})
-})
+app.get("/logout", (req, res) => {
+  req.session.destroy();
+  res.redirect("/");
+});
 
-app.post("/pitscout-submit", function(req, res) {
-	console.log(req.body)
+app.post("/auth", function (request, response) {
+  let username = request.body.username;
+  let password = request.body.password;
+  if (username && password) {
+    db.all(
+      "SELECT * FROM accounts WHERE username = ? AND password = ?",
+      [username, hashPassword(password)],
+      function (error, results, fields) {
+        if (error) throw error;
+        if (results.length > 0) {
+          request.session.loggedin = true;
+          request.session.username = username;
+          response.redirect("/home");
+        } else {
+          response.send("Incorrect Username and/or Password!");
+        }
+        response.end();
+      },
+    );
+  } else {
+    response.send("Please enter Username and Password!");
+    response.end();
+  }
+});
 
-	res.status(200).send("Received Successfully");
-})
+app.post("/register_account", function (req, res) {
+  let username = req.body.username;
+  let password = req.body.password;
 
-const allowedMIMETypes = ['image/jpeg', 'image/png', 'image/gif']
-app.post('/upload', function(req,res) {
-	var count = 0 //Search Database for the amount of teamPics we already have
-	var results = []
+  db.all(
+    "SELECT * FROM accounts WHERE username = ?",
+    [username],
+    function (error, results, fields) {
+      if (results.length > 0) {
+        res.json({ used: true }).end();
+      } else {
+        if (username && password) {
+          db.run(
+            `INSERT INTO accounts (username, password, admin) VALUES (?, ?, 0);`,
+            [username, hashPassword(password)],
+            function (error, results, field) {
+              if (error) throw error;
 
-	if (!req.files) {
-		res.status(200).end()
-		return;
-	}
-	Object.values(req.files).forEach(function(file, index, array) {
+              res.redirect("/login");
+            },
+          );
+        }
+      }
+    },
+  );
+});
 
-		if (!allowedMIMETypes.includes(file.mimetype)) {
-			results.push("Filetype Not Allowed:" + file.name)
-			return;
-		}
-		let teamNumber=696
-		file.mv(`Data/images/${teamNumber}-${count}`, function (err) {
-			if (err) {
-				results.push(err)
-				return
-			}
-			results.push('File Uploaded Successfully')
-			count++;
-		})
-	})
+app.get("/home", function (request, response) {
+  // If the user is loggedin
+  if (request.session.loggedin) {
+    response.sendFile(__dirname + "/pages/home.html");
+  } else {
+    // Not logged in
+    response.status(401).send("Please login to view this page!");
+  }
+});
 
-	res.status(200).send(results.join("\n"))
-})
+app.get("/pitscout", function (req, res) {
+  if (req.session.loggedin || true) {
+    res.sendFile(__dirname + "/pages/pitscout.html");
+  } else {
+    // Not logged in
+    res.status(401).send("Please login to view this page!");
+  }
+});
 
-app.listen(port, ()=>{
-  console.log(`Listening on port ${port}`)
-})
+app.get("/pitscout-get", function (req, res) {
+  res.json({ car: "hi", number: req.query.teamNumber });
+});
+
+app.post("/pitscout-submit", function (req, res) {
+  console.log(req.body);
+
+  res.status(200).send("Received Successfully");
+});
+
+app.post("/upload", async function (req, res) {
+  const results = [];
+  db.all(
+    `SELECT * FROM teamImages WHERE team = ?`,
+    [+req.body.teamNumber],
+    function (error, columnds) {
+      if (error) {
+        res.status(500).end();
+        return;
+      }
+
+      let count = columnds.length;
+
+      if (!req.files) {
+        res.status(200).end();
+        return;
+      }
+      console.log(req.files.images.length);
+      if (req.files.images.length) {
+        req.files.images.forEach(function (file, index) {
+          results.push(addImage(req.body.teamNumber, count, file, index));
+        });
+      } else {
+        results.push(addImage(req.body.teamNumber, count, req.files.images, 0));
+      }
+
+      Promise.all(results).then((resultsArray) => {
+        res.send(resultsArray.join("\n"));
+      });
+    },
+  );
+});
+
+const allowedMIMETypes = ["image/jpeg", "image/png", "image/gif"];
+function addImage(teamnumber, count, file, index) {
+  return new Promise((resolve, reject) => {
+    //if (!allowedMIMETypes.includes(file.mimetype)) {
+    //  results.push("Filetype Not Allowed:" + file.name);
+    //  return;
+    // }
+    const fileName = `${teamnumber}-${count + index + 1}.${getFileExtension(file.name)}`;
+    file.mv(`Data/images/${fileName}`, function (err) {
+      if (err) {
+        resolve(err);
+      }
+      db.run(`INSERT INTO teamImages (team, fileName) VALUES (?,?)`, [
+        teamnumber,
+        fileName,
+      ]);
+      resolve("File Uploaded Successfully");
+    });
+  });
+}
+
+function getFileExtension(filename) {
+  return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2);
+}
+
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`);
+});

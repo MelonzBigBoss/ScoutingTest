@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>htmx Fetch Options Example</title>
+    <script src="htmx.min.js"></script>
+</head>
+<body>
+    <label for="dropdown">Select a Competition:</label>
+    <input type="text"></input>
+    <select id="dropdown" hx-get="/api/pastCompetitions" hx-trigger="load">
+        <!-- Options will be populated dynamically here -->
+    </select>
+    <script>
+        document.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.elt.id === 'dropdown') {
+                const dropdown = document.getElementById('dropdown');
+                const selectedFruit = document.getElementById('selectedFruit');
+                
+                dropdown.innerHTML = '';
+
+                const options = JSON.parse(event.detail.xhr.response);
+                options.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.code;
+                    optionElement.textContent = option.name;
+                    dropdown.appendChild(optionElement);
+                });
+
+                // Handle dropdown change
+                dropdown.addEventListener('change', function() {
+                    fetch(`/api/update-comp`,
+                    { method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body:  JSON.stringify({"new_comp" : dropdown.value })
+                    }) 
+                });
+            }
+        });
+    </script>
+</body>
+</html>

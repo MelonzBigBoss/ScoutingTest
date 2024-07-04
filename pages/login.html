@@ -4,10 +4,12 @@
 		<meta name="viewport" content="width=device-width,minimum-scale=1">
 		<title>Login</title>
         <link href="/style.css" rel="stylesheet"/>
+        <script src="htmx.min.js"></script>
 	</head>
     <body class="align">
         <div class="grid">
-            <form action="/auth" method="POST" class="form login">
+
+            <form class="form login" hx-post="/api/auth" hx-target="#result">
                 <div class="form__field">
                     <label for="username"
                         ><svg class="icon">
@@ -22,6 +24,8 @@
                         class="form__input"
                         placeholder="Username"
                         required
+                        hx-trigger="input"
+                        oninput="clearDiv()"
                     />
                 </div>
 
@@ -37,21 +41,35 @@
                         name="password"
                         class="form__input"
                         placeholder="Password"
+                        hx-trigger="input"
+                        oninput="clearDiv()"
                         required
                     />
                 </div>
 
                 <div class="form__field">
-                    <input type="submit" value="Sign In" />
+                    <input type="submit" id="result" value="Sign In"></input>
                 </div>
             </form>
-
             <p class="text--center">
                 No Account? <a href="/register">Sign up now</a>
                 <svg class="icon">
                     <use xlink:href="#icon-arrow-right"></use>
                 </svg>
             </p>
+
+            <script>
+                document.body.addEventListener('htmx:afterSwap', function(evt) {
+                    if (evt.detail.target.id === 'result') {
+                        var newValue = evt.detail.xhr.responseText;
+                        document.getElementById('result').value = newValue;
+                    }
+                });
+
+                function clearDiv() {
+                    document.getElementById('result').value = 'Sign In';
+                }
+            </script>
         </div>
 
         <svg xmlns="http://www.w3.org/2000/svg" class="icons">

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Search Bar Example</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <input class="search-box" type="number" id="team-search" name="teamNumber" placeholder="Enter a team Number">
+    </body>
+    <script>
+        function handleInputChange() {
+            fetch(`/api/pitscout-get?teamNumber=${inputElement.value}`)
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    /*
+                        TOOD: PROBABLY WILL HAVE TO REDO THIS WHEN THE FORM GETS MORE COMPLEX 
+                            SIMPLY SETTING THE VALUE MAY NOT WORK
+                    */
+                   for (var i = 0; i < form.elements.length; i++) { 
+                        var element = form.elements[i];
+                        if (element.type != "file" && element.name != "team" && element.type != "submit") {
+                            element.value = data[element.name] || "";
+                        }
+                    }
+                   
+                });
+        }
+
+        const inputElement = document.getElementById("team-search");
+        inputElement.addEventListener("input", handleInputChange);
+    </script>
+</html>

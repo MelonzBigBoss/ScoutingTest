@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buttons Example</title>
+    <link rel="stylesheet" href="style.css"> 
+    <script src="htmx.min.js"></script>
+    <title>Home</title>
 </head>
-<body>
-    <h2>Click a Button</h2>
-    <form action="/pitscout" method="get" class="form login">   
-        <div class="form__field">
-            <input type="submit" value="Button 1" />
-        </div>
-    </form>
-    <button>Button 2</button>
-    <button>Button 3</button>
-</body>
+    <body>
+        <h1 id="title">Welcome, <span hx-get="/currentUser" hx-swap="innerHTML" hx-trigger="load"></span></h1>
+
+        <h1>Click a Button</h1>
+        <a class="homebutton" href="/pitscout">Pitscout</a>
+        <a class="homebutton" href="/viewpitscout">View Pitscout</a>
+        <a class="homebutton" href="/logout">Logout</a>
+        <a class="homebutton" href="/adminpanel">Admin Panel</a>
+    </body>
 </html>
 

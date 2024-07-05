@@ -3,7 +3,6 @@ const sqlite = require("sqlite3");
 const db = new sqlite.Database("Data/data.db");
 const util = require("./util.js");
 
-
 db.exec(`
 	PRAGMA foreign_keys = ON;
 

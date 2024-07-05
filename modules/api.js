@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require("path");
 const router = express.Router();
 
 const db = require('./database.js')
@@ -67,6 +68,30 @@ if (username && password) {
 });
 
 router.use(util.isLoggedIn)
+
+
+
+
+
+
+
+
+
+
+
+router.get("/teamImageNames", (req, res) => {
+  db.all(`SELECT fileName FROM teamImages where team = ?`, [req.query.team], (error, results) => {
+    res.send(results.map(row => row.fileName))
+  })
+})
+
+router.get("/teamImage", (req, res) => {
+  db.get(`SELECT * FROM teamImages where fileName = ?`, [req.query.fileName], (error, result) => {
+      if(result)
+        res.sendFile(path.join(__dirname, '..', 'Data', 'images', result.fileName))
+  })
+})
+
 
 router.get("/currentUser", (req, res)=> {
     res.send(req.session.username)
@@ -165,6 +190,6 @@ function addImage(teamnumber, count, file, index, account_id) {
 
 function getFileExtension(filename) {
     return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2);
-  }
+}
   
 module.exports = router

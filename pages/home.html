@@ -8,12 +8,13 @@
     <title>Home</title>
 </head>
     <body>
-        <h1 id="title">Welcome, <span hx-get="/currentUser" hx-swap="innerHTML" hx-trigger="load"></span></h1>
+        <h1 id="title">Welcome, <span hx-get="/api/currentUser" hx-swap="innerHTML" hx-trigger="load"></span></h1>
 
         <h1>Click a Button</h1>
         <a class="homebutton" href="/pitscout">Pitscout</a>
+        <a class="homebutton" href="/matchscout">Match Scout</a>
         <a class="homebutton" href="/viewpitscout">View Pitscout</a>
-        <a class="homebutton" href="/logout">Logout</a>
+        <a class="homebutton" href="/api/logout">Logout</a>
         <a class="homebutton" href="/adminpanel">Admin Panel</a>
     </body>
 </html>

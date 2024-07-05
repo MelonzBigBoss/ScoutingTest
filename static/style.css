@@ -245,3 +245,9 @@ text-align: center;
 
     border-width: 1px;
 }
+
+#main-image {
+    position: relative;
+    width: 80%;
+    max-width: 200px;
+}

@@ -8,10 +8,48 @@
     </head>
     <body>
         <input class="search-box" type="number" id="team-search" name="teamNumber" placeholder="Enter a team Number">
+
+        <div class="image-viewer">
+            <button class="arrow left-arrow" onclick="previousImage()">&#9664;</button>
+            <img id="main-image" src="" alt="Image Viewer">
+            <button class="arrow right-arrow" onclick="nextImage()">&#9654;</button>
+        </div>
     </body>
     <script>
-        function handleInputChange() {
-            fetch(`/api/pitscout-get?teamNumber=${inputElement.value}`)
+        let teamNumber = 0;
+        let currentIndex = 0;
+
+        images = {}
+
+        const mainImage = document.getElementById('main-image');
+
+        async function showImage(index) {
+            if (images.length > 0) {
+                mainImage.src = `/api/teamImage?fileName=`+images[index];
+            }
+        }
+
+        function nextImage() {
+            currentIndex = (currentIndex + 1) % images.length;
+            showImage(currentIndex);
+        }
+
+        function previousImage() {
+            currentIndex = (currentIndex - 1 + images.length) % images.length;
+            showImage(currentIndex);
+        }
+
+        window.onload = function() {
+            showImage(currentIndex);
+            handleInputChange();
+        }
+
+        async function handleInputChange() {
+            teamNumber = inputElement.value;
+
+        
+
+            fetch(`/api/pitscout-get?teamNumber=${teamNumber}`)
                 .then((response) => {
                     if (!response.ok) {
                         throw new Error("Network response was not ok");
@@ -19,18 +57,19 @@
                     return response.json();
                 })
                 .then((data) => {
-                    /*
-                        TOOD: PROBABLY WILL HAVE TO REDO THIS WHEN THE FORM GETS MORE COMPLEX 
-                            SIMPLY SETTING THE VALUE MAY NOT WORK
-                    */
-                   for (var i = 0; i < form.elements.length; i++) { 
-                        var element = form.elements[i];
-                        if (element.type != "file" && element.name != "team" && element.type != "submit") {
-                            element.value = data[element.name] || "";
-                        }
-                    }
                    
                 });
+
+            await fetch(`/api/teamImageNames?team=${teamNumber}`).then((response) => {
+                if(!response.ok) {
+                    return {}
+                }
+                return response.json()
+            }).then((data) => {
+                images = data
+            })
+
+            showImage(currentIndex);
         }
 
         const inputElement = document.getElementById("team-search");

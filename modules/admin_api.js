@@ -4,6 +4,8 @@ const router = express.Router();
 const db = require('./database.js')
 const util = require('./util.js')
 
+const tba = require('./tba.js')
+
 router.use(util.isAdminLoggedIn)
 
 router.post("/update-comp", function(req,res) {
@@ -24,7 +26,7 @@ router.get('/pastCompetitions', (req, res) => {
 function updateCompetition(new_comp) {
     var finalreturn = true;
   
-    db.run(`INSERT OR IGNORE INTO competitions (code, name, last_update) VALUES (?, ?, ?)`, [new_comp, new_comp, ""], async function(error) {
+    db.run(`INSERT OR IGNORE INTO competitions (code, name, last_update) VALUES (?, ?, ?)`, [new_comp, null, ""], async function(error) {
       if (error){
         console.log(error)
         finalreturn = false;
@@ -37,6 +39,17 @@ function updateCompetition(new_comp) {
           finalreturn = false;
           return 
         }
+        db.get(`SELECT name FROM competitions WHERE code = ?`, [new_comp], async function(e, res) { // In the future, store more data from this, idk if needed
+          if(res && !res.name) {
+            const comp_name = await tba.callAPI(`/event/${new_comp}`)
+            if (!comp_name) return;
+            db.run(`UPDATE competitions SET name = ? WHERE code = ?`, [comp_name.short_name || comp_name.name, new_comp], function(error) {
+              if (error) {
+                console.log(error)
+              }
+            })
+          }
+        })
         competition = new_comp;
       })
     })
@@ -44,13 +57,12 @@ function updateCompetition(new_comp) {
     return finalreturn
   }
 
-let competition = "2024sunshow"
+let competition = ""
 
 function getCompetition() {
   return competition
 }
 
 updateCompetition("2024sunshow")
-
 
 module.exports =  { router, getCompetition }

@@ -10,10 +10,13 @@ const callAPI = async (route) => {
       }).then(response => {
         if (!response.ok) {
           console.log("TBA failed")
+          return null
         }
-        return response
+        return response.json()
+      }).catch(error => {
+        console.log(error)
       })
-    ).json();
+    );
   };
 
 module.exports =  { callAPI }

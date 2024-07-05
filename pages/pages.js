@@ -31,7 +31,11 @@ router.get("/home", function (request, response) {
 
 router.get("/pitscout", function (req, res) {
     res.sendFile(__dirname + "/pitscout.html");
-  });
+});
+
+router.get("/matchscout", function (req, res) {
+    res.sendFile(__dirname + "/matchscout.html");
+});
   
 router.get("/viewpitscout", function(req, res) {
     res.sendFile(__dirname + "/viewpitscout.html");

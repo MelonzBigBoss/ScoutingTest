@@ -8,13 +8,243 @@
         <!-- Linking external CSS file -->
     </head>
     <body>
-    hi
+        <section id="wrapper">
+            <div class="content">
+               <!-- Tab links -->
+               <div class="tabs">
+                  <button class="tablinks active" data-country="MATCH"><p data-title="MATCH">MATCH</p></button>
+                  <button class="tablinks" data-country="AUTO"><p data-title="AUTO">AUTO</p></button>
+                  <button class="tablinks" data-country="TELEOP"><p data-title="TELE-OP">TELE-OP</p></button>
+                  <button class="tablinks" data-country="ENDGAME"><p data-title="ENDGAME">ENDGAME</p></button>
+               </div>
+         
+               <!-- Tab content -->
+                <div class="wrapper_tabcontent">
+                    <div id="MATCH" class="tabcontent active">
+                        <h3>MATCH</h3>
+                        <p>
+                            <button onclick="getTeamNums()">FETCH TEAM TO SCOUT</button>
+                            <input type="text" id="matchtoscout" placeholder="Match To Scout">
+                            <input type="text" id="teamtoscout" placeholder="Team To Scout">
+
+                        </p>
+                    </div>
+            
+                    <div id="AUTO" class="tabcontent">
+                        <h3>AUTO</h3>
+                        <p> 
+                            <div>Speaker Count: <div id="AutoSpeakCount">0</div></div>
+
+                            <button onclick="incrementAuto()"> SPEAKER + </button>    
+                            <button onclick="decrementAuto()"> SPEAKER - </button>  
+                        </p>
+  
+
+                    </div>
+            
+                    <div id="TELEOP" class="tabcontent">
+                        <h3>TELE-OP</h3>
+                        <p>
+                            <div>Speaker Count: <div id="SpeakCount">0</div></div>
+
+                            <button onclick="incrementSpeaker()"> SPEAKER + </button>    
+                            <button onclick="decrementSpeaker()"> SPEAKER - </button>  
+    
+                            <div>Amp Count: <div id="AmpCount">0</div></div>
+
+                            <button onclick="incrementAmp()"> AMP + </button>    
+                            <button onclick="decrementAmp()"> AMP - </button>  
+                        </p>
+                    </div>
+            
+                    <div id="ENDGAME" class="tabcontent">
+                        <h3>ENDGAME</h3>
+                        <p>
+                            <input type="checkbox" id="climb"> CLIMBED?
+                            <input type="checkbox" id="trap"> TRAP?
+
+                            <button onclick="submitMatchScout()">Submit</button>
+                        </p>
+                    </div>
+               </div>
+            </div>
+         </section>
     </body>
     <script>
+        let currMatchTeams =  ["red1", "red2", "red3", "blue1", "blue2", "blue3"]
+
         const socket = new WebSocket(`ws://${location.hostname}:8080`)
 
-        socket.onopen = () => {
+        socket.onmessage = (message)=>{
+            teamtoscoutInput.value = currMatchTeams[JSON.parse(message.data).index]
+        }
 
+        async function getTeamNums() {
+            fetch(`/TeamToScout?match=${matchtoscoutInput.value}`).then(async function (response) {
+                if (!response.ok) return ["red1", "red2", "red3", "blue1", "blue2", "blue3"]
+
+                return response;
+            }).then(async (data) => {
+                currMatchTeams = await data.json()
+
+                socket.send(JSON.stringify({match: matchtoscoutInput.value}))
+            });
+
+        }
+
+        function submitMatchScout() {
+            fetch("/api/submitMatchScout", {
+                
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        Auto : AutoSpeaker,
+                        TeleopSpeaker : TeleSpeaker,
+                        TeleopAmp : TeleAmp,
+                        DidClimb : climbInput.checked,
+                        DidTrap : trapInput.checked,
+                        team : teamtoscoutInput.value,
+                        match : matchtoscoutInput.value,
+                    }),
+                    
+            })
+        }
+
+        let AutoSpeaker = 0, TeleSpeaker = 0, TeleAmp = 0;
+
+        function incrementAmp() {
+            TeleAmp+=1;
+            UpdateAmpCounter();
+        }
+
+        function incrementAuto() {
+            AutoSpeaker+=1;
+            UpdateAutoCounter();
+        }
+
+        function incrementSpeaker() {
+            TeleSpeaker+=1;
+            UpdateSpeakerCounter();
+        }
+
+        function decrementAmp() {
+            TeleAmp-=1;
+            UpdateAmpCounter();
+        }
+
+        function decrementAuto() {
+            AutoSpeaker-=1;
+            UpdateAutoCounter();
+        }
+
+        function decrementSpeaker() {
+            TeleSpeaker-=1;
+            UpdateSpeakerCounter();
+        }
+
+        function UpdateAmpCounter() {
+            ampCounter.textContent = TeleAmp;
+        }
+        function UpdateAutoCounter() {
+            autoCount.textContent = AutoSpeaker;
+        }
+        function UpdateSpeakerCounter() {
+            speakCount.textContent = TeleSpeaker;
+        }
+
+        const ampCounter = document.getElementById('AmpCount');
+        const speakCount = document.getElementById('SpeakCount');
+        const autoCount = document.getElementById('AutoSpeakCount');
+        const trapInput = document.getElementById('trap');
+        const climbInput = document.getElementById('climb');
+        const teamtoscoutInput = document.getElementById('teamtoscout');
+        const matchtoscoutInput = document.getElementById('matchtoscout');
+
+        var tabLinks = document.querySelectorAll(".tablinks");
+        var tabContent = document.querySelectorAll(".tabcontent");
+
+        tabLinks.forEach(function(el) {
+            el.addEventListener("click", openTabs);
+        });
+
+        function openTabs(el) {
+            if (teamtoscoutInput.value == "" || matchtoscoutInput.value == "") return;
+
+            var btnTarget = el.currentTarget;
+            var country = btnTarget.dataset.country;
+
+            tabContent.forEach(function(el) {
+                el.classList.remove("active");
+            });
+
+            tabLinks.forEach(function(el) {
+                el.classList.remove("active");
+            });
+
+            document.querySelector("#" + country).classList.add("active");
+            btnTarget.classList.add("active");
+        }
+
+        // Swipe detection
+        var startX, startY, endX, endY;
+
+        content = document.querySelector(".content");
+        
+            content.addEventListener("touchstart", function(e) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            });
+
+            content.addEventListener("touchmove", function(e) {
+                endX = e.touches[0].clientX;
+                endY = e.touches[0].clientY;
+            });
+
+            content.addEventListener("touchend", function(e) {
+                var diffX = endX - startX;
+                var diffY = endY - startY;
+            
+                if (e.target.tagName.toLowerCase() === 'input') {
+                    return;
+                }
+                
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > window.innerWidth/3) {
+                    if (diffX > 0) {
+                        // Swipe right
+                        switchTab('prev');
+                    } else {
+                        // Swipe left
+                        switchTab('next');
+                    }
+                }
+            
+        });
+
+        function switchTab(direction) {
+            if (teamtoscoutInput.value == "" || matchtoscoutInput.value == "") return;
+
+            var current = document.querySelector(".tabcontent.active");
+            var currentIndex = Array.from(tabContent).indexOf(current);
+            var newIndex;
+
+            if (direction === 'next') {
+                newIndex = (currentIndex + 1) % tabContent.length;
+            } else {
+                newIndex = (currentIndex - 1 + tabContent.length) % tabContent.length;
+            }
+
+            tabContent.forEach(function(el) {
+                el.classList.remove("active");
+            });
+
+            tabLinks.forEach(function(el) {
+                el.classList.remove("active");
+            });
+
+            tabContent[newIndex].classList.add("active");
+            tabLinks[newIndex].classList.add("active");
         }
     </script>
 </html>

@@ -63,6 +63,6 @@ function getCompetition() {
   return competition
 }
 
-updateCompetition("2024sunshow")
+updateCompetition("2024caph")
 
 module.exports =  { router, getCompetition }

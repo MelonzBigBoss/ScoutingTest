@@ -58,17 +58,6 @@ app.listen(port, () => {
   console.log(`Listening on port ${port}`);
 });
 
-function sendDataToClients(){
-  var i = 1;
-  wss.clients.forEach(function each(client) {
-
-    if (client.readyState == WebSocket.OPEN) {
-      client.send(JSON.stringify({teamToScout : i}));
-      i++
-    }
-  })
-}
-
 app.get('/TeamToScout', async function (req, res) {
   const matchNum = req.query.match
 
@@ -76,17 +65,41 @@ app.get('/TeamToScout', async function (req, res) {
 
   const matchData = allMatchData.find(obj => obj.comp_level == 'qm' && obj.match_number == matchNum)
 
-  if (!matchData) return res.status(500);
+  if (!matchData) return res.status(500).end();
   
   const allianceData = matchData.alliances
 
   const blueTeams = allianceData.blue.team_keys 
   const redTeams = allianceData.red.team_keys
 
-  console.log(blueTeams, redTeams)
+  const redAndBlueNums = redTeams.concat(blueTeams).map((number) => number.replace("frc",""));
 
-  res.status(200)
+  res.send(redAndBlueNums).end();
 })
+
+let ActiveScouters = []
+
+function sendDataToClients(ws, message){
+
+    if (!ActiveScouters[message.match]) { 
+      ActiveScouters[message.match] = [0,0,0,0,0,0] 
+    }
+
+    let index = ActiveScouters[message.match].indexOf(0);
+
+    if(index != -1 && !ActiveScouters.some(row => row.includes(ws.sessionId))) {
+      ws.indexToScout = index;
+      ws.matchToScout = message.match;
+      ActiveScouters[ws.matchToScout][ws.indexToScout] = ws.sessionId;
+
+      if (ws.readyState == WebSocket.OPEN) {
+        ws.send(JSON.stringify({index : ws.indexToScout}));
+      }
+    }
+    if(ActiveScouters[message.match].filter((x) => x != 0).length == 0) {
+      delete ActiveScouters[message.match];
+    } 
+}
 
 wss.on('connection', (ws, req) => {
   ws.sessionId = req.headers.cookie.split("=")[1].split('.')[0].substring(4); // Used To get sessionId from headers
@@ -102,10 +115,17 @@ wss.on('connection', (ws, req) => {
 
   ws.on('message', (message) => {
       console.log(`Message from ${ws}: ${message}`)
-      sendDataToClients();
+      sendDataToClients(ws, JSON.parse(message));
   })
 
   ws.on('close', () => {
+    if (ws.matchToScout) {
+      ActiveScouters[ws.matchToScout][ws.indexToScout] = 0;
+      if(ActiveScouters[ws.matchToScout].filter((x) => x != 0).length == 0) {
+        delete ActiveScouters[ws.matchToScout];
+      } 
+    }
+
     console.log(`${ws.username} disconnected`)
   })
 })

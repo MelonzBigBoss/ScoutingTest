@@ -4,6 +4,7 @@ const router = express.Router();
 
 const db = require('./database.js')
 const util = require('./util.js')
+const  { getCompetition } = require('./admin_api.js')
 
 router.post("/register_account", function (req, res) {
     let username = req.body.username;
@@ -69,13 +70,17 @@ if (username && password) {
 
 router.use(util.isLoggedIn)
 
+router.post("/submitMatchScout", (req, res) => {
 
 
+  db.run(`INSERT INTO matchscout (team, match, comp, data, account_id) VALUES (?,?,?,?,?)`, [ req.body.team, req.body.match, getCompetition(), JSON.stringify(req.body), req.session.primaryKey ], function(err) {
+    if (err) {
+      console.log(err)
+    }
 
-
-
-
-
+    res.status(200).end()
+  })
+})
 
 
 

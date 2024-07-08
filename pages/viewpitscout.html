@@ -47,8 +47,6 @@
         async function handleInputChange() {
             teamNumber = inputElement.value;
 
-        
-
             fetch(`/api/pitscout-get?teamNumber=${teamNumber}`)
                 .then((response) => {
                     if (!response.ok) {

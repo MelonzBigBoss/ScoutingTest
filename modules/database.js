@@ -31,6 +31,18 @@ db.exec(`
 		FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE SET NULL
 		);
 
+	CREATE TABLE IF NOT EXISTS matchscout(
+		id INTEGER PRIMARY KEY,
+		team INTEGER NOT NULL,
+		comp TEXT NOT NULL,
+		match INTEGER NOT NULL,
+
+		data TEXT NOT NULL, 
+
+		account_id INTEGER,
+		FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE SET NULL
+	);
+
 	INSERT OR IGNORE INTO pitscout (id, team, weight, size, account_id) VALUES (1,696,4,'24x24',NULL);
 
 	CREATE TABLE IF NOT EXISTS teamImages (
@@ -39,7 +51,7 @@ db.exec(`
 		fileName TEXT NOT NULL,
 		account_id INTEGER,
 		FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE SET NULL
-	)
+	);
 `);
 
 
